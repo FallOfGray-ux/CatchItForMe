@@ -1,5 +1,5 @@
 # Catch It For Me 🐭
-tests
+
 A sarcastic cat brings you a mouse and refuses to catch it. Your job: tap the mouse before it escapes. Mobile-first, hackathon-ready.
 
 ## Run it locally
