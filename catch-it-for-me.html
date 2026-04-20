@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1033" />
+  <title>Catch It For Me</title>
+
+  <!-- React + Babel via CDN. No build step. Just open this file in a browser. -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* =========================================================
+       Catch It For Me — Styles
+       Mobile-first. Bright, slightly chaotic. Big tap targets.
+       ========================================================= */
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body, #root {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    /* ---------- App shell ---------- */
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* Backgrounds — unlockable themes */
+    .bg-basic    { background: linear-gradient(160deg, #ffe29f 0%, #ffa99f 50%, #ff719a 100%); }
+    .bg-luxury   { background: linear-gradient(160deg, #f7971e 0%, #ffd200 100%); }
+    .bg-haunted  { background: linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%); }
+    .bg-neon     { background: linear-gradient(160deg, #2b0a3d 0%, #0f0c29 50%, #24243e 100%); }
+
+    /* Subtle animated pattern for flair */
+    .app::before {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+      animation: drift 18s linear infinite;
+    }
+    @keyframes drift {
+      from { background-position: 0 0; }
+      to   { background-position: 240px 240px; }
+    }
+
+    /* ---------- Top bar (coins) ---------- */
+    .top-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .coin-pill {
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex; align-items: center; gap: 6px;
+      pointer-events: auto;
+    }
+    .timer-pill {
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 18px;
+      color: #fff;
+      pointer-events: auto;
+      min-width: 54px; text-align: center;
+    }
+    .timer-pill.low { color: #ff4b4b; animation: pulse 0.4s infinite alternate; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+    /* ---------- Screens ---------- */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+      gap: 18px;
+      z-index: 10;
+    }
+    .screen h1 {
+      font-size: 44px;
+      margin: 0;
+      text-align: center;
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+      letter-spacing: -1px;
+    }
+    .screen h2 {
+      font-size: 28px;
+      margin: 0;
+      text-align: center;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    }
+    .screen p { margin: 0; text-align: center; opacity: 0.95; }
+
+    /* Big tap-friendly buttons */
+    .btn {
+      min-height: 56px;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(180deg, #ff5f6d 0%, #ff2d55 100%);
+      box-shadow: 0 6px 0 #b2002c, 0 10px 20px rgba(0,0,0,0.25);
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      min-width: 200px;
+    }
+    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b2002c, 0 4px 10px rgba(0,0,0,0.25); }
+    .btn.secondary { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 6px 0 #0a6fa2, 0 10px 20px rgba(0,0,0,0.25); }
+    .btn.secondary:active { box-shadow: 0 2px 0 #0a6fa2, 0 4px 10px rgba(0,0,0,0.25); }
+    .btn.ghost { background: rgba(0,0,0,0.35); box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+    .btn.ghost:active { box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+    .btn:disabled { opacity: 0.5; filter: grayscale(0.5); }
+
+    /* ---------- Cat ---------- */
+    .cat {
+      font-size: 96px;
+      line-height: 1;
+      position: relative;
+      filter: drop-shadow(0 6px 0 rgba(0,0,0,0.2));
+      transition: transform 0.2s ease;
+    }
+    .cat.idle { animation: sway 2.6s ease-in-out infinite; }
+    @keyframes sway {
+      0%, 100% { transform: rotate(-4deg); }
+      50%      { transform: rotate(4deg); }
+    }
+    .cat.corner {
+      position: absolute;
+      top: 60px; left: 12px;
+      font-size: 56px;
+      z-index: 5;
+    }
+
+    /* Speech bubble */
+    .bubble {
+      position: relative;
+      background: #fff;
+      color: #222;
+      padding: 10px 14px;
+      border-radius: 14px;
+      max-width: 260px;
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      animation: bubblePop 0.3s ease;
+    }
+    .bubble::after {
+      content: "";
+      position: absolute;
+      bottom: -8px; left: 24px;
+      border: 10px solid transparent;
+      border-top-color: #fff;
+      border-bottom: 0;
+    }
+    .bubble.corner { max-width: 200px; font-size: 13px; padding: 8px 12px; }
+    @keyframes bubblePop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ---------- Mouse ---------- */
+    .mouse {
+      position: absolute;
+      font-size: 48px;
+      line-height: 1;
+      z-index: 8;
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0.18s cubic-bezier(.5, 1.6, .5, 1);
+      cursor: pointer;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+      animation: wiggle 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes wiggle {
+      from { transform: translate(-50%, -50%) rotate(-6deg); }
+      to   { transform: translate(-50%, -50%) rotate(6deg); }
+    }
+    .mouse.rare {
+      filter: drop-shadow(0 0 12px gold) drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+      animation: wiggle 0.3s ease-in-out infinite alternate, sparkle 1s linear infinite;
+    }
+    @keyframes sparkle {
+      0%, 100% { text-shadow: 0 0 0 gold; }
+      50%      { text-shadow: 0 0 20px gold, 0 0 40px orange; }
+    }
+
+    .coin-pop {
+      position: absolute;
+      font-size: 22px;
+      font-weight: 800;
+      color: gold;
+      text-shadow: 1px 1px 0 #000;
+      pointer-events: none;
+      animation: float 0.9s ease-out forwards;
+      z-index: 30;
+    }
+    @keyframes float {
+      0%   { transform: translate(-50%, -50%) translateY(0);    opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-80px); opacity: 0; }
+    }
+
+    .shake { animation: shake 0.5s; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-12px); }
+      40%      { transform: translateX(12px); }
+      60%      { transform: translateX(-8px); }
+      80%      { transform: translateX(8px); }
+    }
+
+    /* ---------- Shop ---------- */
+    .shop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      display: flex; flex-direction: column;
+      padding: 70px 12px 20px;
+      z-index: 40;
+    }
+    .shop h2 { margin-bottom: 4px; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+    .tabs { display: flex; gap: 8px; margin: 10px 0 14px; }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .tab.active { background: #fff; color: #222; }
+
+    .shop-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      overflow-y: auto;
+      padding-bottom: 16px;
+    }
+    .shop-item {
+      background: rgba(255,255,255,0.94);
+      color: #222;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .shop-item .emoji { font-size: 48px; line-height: 1; }
+    .shop-item .name { font-weight: 800; font-size: 14px; }
+    .shop-item .price { font-size: 13px; font-weight: 700; color: #c4851a; }
+    .shop-item .btn-sm {
+      margin-top: 4px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 10px;
+      background: #4facfe;
+      color: #fff;
+      min-height: 36px;
+    }
+    .shop-item.locked .btn-sm { background: #ffb74d; color: #222; }
+    .shop-item.equipped .btn-sm { background: #888; }
+    .shop-item.owned .btn-sm { background: #4caf50; }
+
+    .badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: #4caf50;
+      color: white;
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .close-x {
+      position: absolute;
+      top: 12px; right: 12px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      z-index: 50;
+    }
+
+    .home-stack { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+    .result-big {
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      text-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+      margin-bottom: 0;
+    }
+    .result-big.win  { color: #ffe066; }
+    .result-big.fail { color: #ff5c5c; }
+    .reward {
+      background: rgba(0,0,0,0.35);
+      padding: 10px 20px;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .btn.huge { min-width: 240px; font-size: 22px; min-height: 68px; border-radius: 20px; }
+
+    .bouncy { animation: bounce 2.2s ease-in-out infinite; }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    /* Simple loading / offline-CDN fallback message */
+    #boot-warning {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; color: #222;
+      font-family: system-ui, sans-serif;
+      background: #ffd36a;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <!-- Shown only until React boots. If you see this, the CDN didn't load — check your internet. -->
+    <div id="boot-warning">
+      Loading the game… If this message stays visible, your browser may be offline or blocking the React CDN scripts.
+    </div>
+  </div>
+
+  <script type="text/babel" data-type="module">
+    /* =============================================================
+       Catch It For Me — All game logic (single-file build)
+       Sections:
+         1. Constants & content
+         2. Sound helper (Web Audio — no asset files)
+         3. CatCharacter + speech bubble
+         4. Mouse (tappable target)
+         5. HomeScreen
+         6. GameScreen (round timer, jumps, rare spawn)
+         7. ResultScreen (win/fail + share)
+         8. ShopScreen (Skins / Backgrounds / Sounds tabs)
+         9. App (state + localStorage persistence)
+       ============================================================= */
+
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    /* -------- 1. CONSTANTS & CONTENT -------- */
+    const CAT_LINES = {
+      start: [
+        "I brought it. You finish the job.",
+        "I'm not getting up for this.",
+        "Dinner is served. Allegedly.",
+        "Your turn, two-legs.",
+      ],
+      fail: [
+        "Wow. That was embarrassing.",
+        "It's literally right there.",
+        "The mouse is smarter than you.",
+        "I've seen houseplants with better reflexes.",
+      ],
+      win: [
+        "Acceptable.",
+        "You got lucky.",
+        "Don't get used to it.",
+        "Fine. I'm mildly impressed.",
+      ],
+      home: [
+        "Another mouse already? Ugh, fine.",
+        "Ready when you are. Probably.",
+        "I'll supervise.",
+      ],
+    };
+
+    const CAT_SKINS = [
+      { id: "default",  name: "Default Cat",  emoji: "🐱", price: 0 },
+      { id: "business", name: "Business Cat", emoji: "😼", price: 100 },
+      { id: "vampire",  name: "Vampire Cat",  emoji: "🧛", price: 250 },
+      { id: "dj",       name: "DJ Cat",       emoji: "🎧", price: 500 },
+    ];
+
+    const BACKGROUNDS = [
+      { id: "basic",   name: "Basic Room",   className: "bg-basic",   price: 0 },
+      { id: "luxury",  name: "Luxury Room",  className: "bg-luxury",  price: 150 },
+      { id: "haunted", name: "Haunted Room", className: "bg-haunted", price: 300 },
+      { id: "neon",    name: "Neon Room",    className: "bg-neon",    price: 600 },
+    ];
+
+    const SOUND_PACKS = [
+      { id: "default", name: "Default SFX", price: 0,   tone: "sine"     },
+      { id: "meme",    name: "Meme Pack",   price: 200, tone: "square"   },
+      { id: "techno",  name: "Techno Pack", price: 400, tone: "sawtooth" },
+    ];
+
+    const STORAGE_KEY = "catch-it-for-me/v1";
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    /* -------- 2. SOUND HELPER -------- */
+    const audioCtxRef = { current: null };
+    function beep(tone = "sine", freq = 660, dur = 0.08, vol = 0.15) {
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const ctx = audioCtxRef.current;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = tone;
+        osc.frequency.value = freq;
+        gain.gain.value = vol;
+        osc.connect(gain).connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+        osc.stop(ctx.currentTime + dur);
+      } catch (e) { /* audio non-critical */ }
+    }
+
+    /* -------- 3. CatCharacter -------- */
+    function CatCharacter({ skinId, message, corner = false }) {
+      const skin = CAT_SKINS.find((s) => s.id === skinId) || CAT_SKINS[0];
+      return (
+        <div style={corner
+          ? { position: "absolute", top: 60, left: 12, zIndex: 6 }
+          : { display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          {message && (
+            <div className={`bubble ${corner ? "corner" : ""}`} key={message}>
+              {message}
+            </div>
+          )}
+          <div className={`cat ${corner ? "corner" : "idle"}`}
+               style={corner ? { position: "static", fontSize: 56 } : null}>
+            {skin.emoji}
+          </div>
+        </div>
+      );
+    }
+
+    /* -------- 4. Mouse -------- */
+    function Mouse({ x, y, rare, onTap }) {
+      return (
+        <div
+          className={`mouse ${rare ? "rare" : ""}`}
+          style={{ left: `${x}%`, top: `${y}%` }}
+          onClick={onTap}
+          onTouchStart={(e) => { e.preventDefault(); onTap(); }}
+          role="button"
+          aria-label="mouse"
+        >
+          {rare ? "🐭" : "🐁"}
+        </div>
+      );
+    }
+
+    /* -------- 5. HomeScreen -------- */
+    function HomeScreen({ skinId, onStart, onShop }) {
+      const [msg] = useState(() => pick(CAT_LINES.home));
+      return (
+        <div className="screen">
+          <h1 className="bouncy">Catch It For Me</h1>
+          <p>Your cat refuses to do its job. Tap the mouse before it escapes.</p>
+          <CatCharacter skinId={skinId} message={msg} />
+          <div className="home-stack">
+            <button className="btn huge" onClick={onStart}>Start Hunt 🐭</button>
+            <button className="btn secondary" onClick={onShop}>Shop 🛍️</button>
+          </div>
+        </div>
+      );
+    }
+
+    /* -------- 6. GameScreen -------- */
+    function GameScreen({ skinId, roundNumber, soundTone, onFinish }) {
+      const durationMs = useMemo(() => 5000 + Math.random() * 5000, [roundNumber]);
+      const jumpMs = useMemo(
+        () => clamp(1100 - roundNumber * 60, 300, 1200) - Math.random() * 200,
+        [roundNumber]
+      );
+      const isRare = useMemo(() => Math.random() < 0.12, [roundNumber]);
+
+      const [pos, setPos] = useState({ x: 50, y: 60 });
+      const [remaining, setRemaining] = useState(durationMs);
+      const [startedAt] = useState(() => performance.now());
+      const [coinPop, setCoinPop] = useState(null);
+      const [startMsg, setStartMsg] = useState(() => pick(CAT_LINES.start));
+      const finishedRef = useRef(false);
+
+      // Hide opener after ~1.8s
+      useEffect(() => {
+        const t = setTimeout(() => setStartMsg(null), 1800);
+        return () => clearTimeout(t);
+      }, []);
+
+      const reposition = useCallback(() => {
+        setPos({ x: 10 + Math.random() * 80, y: 25 + Math.random() * 60 });
+      }, []);
+
+      useEffect(() => {
+        reposition();
+        const jumpTimer = setInterval(reposition, jumpMs);
+        return () => clearInterval(jumpTimer);
+      }, [jumpMs, reposition]);
+
+      useEffect(() => {
+        const tick = setInterval(() => {
+          const left = durationMs - (performance.now() - startedAt);
+          if (left <= 0) {
+            clearInterval(tick);
+            if (!finishedRef.current) {
+              finishedRef.current = true;
+              onFinish({ caught: false, rare: isRare });
+            }
+          } else {
+            setRemaining(left);
+          }
+        }, 100);
+        return () => clearInterval(tick);
+      }, [durationMs, startedAt, onFinish, isRare]);
+
+      const handleTap = () => {
+        if (finishedRef.current) return;
+        finishedRef.current = true;
+        beep(soundTone, isRare ? 1100 : 880, 0.12, 0.2);
+        setCoinPop({ x: pos.x, y: pos.y, text: isRare ? "+50" : "+10" });
+        setTimeout(() => onFinish({ caught: true, rare: isRare }), 450);
+      };
+
+      const secondsLeft = Math.max(0, remaining / 1000);
+
+      return (
+        <div className="screen" style={{ justifyContent: "flex-start", paddingTop: 110 }}>
+          <CatCharacter skinId={skinId} message={startMsg} corner />
+          <Mouse x={pos.x} y={pos.y} rare={isRare} onTap={handleTap} />
+          {coinPop && (
+            <div className="coin-pop" style={{ left: `${coinPop.x}%`, top: `${coinPop.y}%` }}>
+              {coinPop.text} 🪙
+            </div>
+          )}
+          <div className="top-bar" style={{ top: 58 }}>
+            <span />
+            <span className={`timer-pill ${secondsLeft < 2 ? "low" : ""}`}>
+              {secondsLeft.toFixed(1)}s
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    /* -------- 7. ResultScreen -------- */
+    function ResultScreen({ skinId, won, rare, coinsEarned, streak, onAgain, onHome, onShare }) {
+      const [msg] = useState(() => pick(won ? CAT_LINES.win : CAT_LINES.fail));
+      return (
+        <div className={`screen ${won ? "" : "shake"}`}>
+          <h1 className={`result-big ${won ? "win" : "fail"}`}>
+            {won ? "CAUGHT!" : "ESCAPED!"}
+          </h1>
+          <CatCharacter skinId={skinId} message={msg} />
+          {won && (
+            <div className="reward">
+              +{coinsEarned} 🪙
+              {rare && <span> (rare bonus!)</span>}
+              {streak > 1 && <div style={{ fontSize: 14, marginTop: 4, opacity: 0.9 }}>🔥 Streak x{streak}</div>}
+            </div>
+          )}
+          <div className="home-stack">
+            <button className="btn" onClick={onAgain}>Play Again</button>
+            <button className="btn secondary" onClick={onHome}>Home</button>
+            <button className="btn ghost" onClick={onShare}>Share Result 📤</button>
+          </div>
+        </div>
+      );
+    }
+
+    /* -------- 8. ShopScreen -------- */
+    function ShopScreen({ coins, skinId, bgId, soundId, owned, onClose, onBuy, onEquip }) {
+      const [tab, setTab] = useState("skins");
+      const catalog = tab === "skins" ? CAT_SKINS
+                    : tab === "backgrounds" ? BACKGROUNDS
+                    : SOUND_PACKS;
+      const equippedId = tab === "skins" ? skinId : tab === "backgrounds" ? bgId : soundId;
+      const ownedSet = owned[tab];
+
+      return (
+        <div className="shop">
+          <button className="close-x" onClick={onClose} aria-label="close">✕</button>
+          <h2>Shop</h2>
+          <div style={{ textAlign: "center", fontWeight: 700 }}>Coins: 🪙 {coins}</div>
+
+          <div className="tabs">
+            {["skins", "backgrounds", "sounds"].map((t) => (
+              <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
+                {t[0].toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="shop-grid">
+            {catalog.map((item) => {
+              const isOwned = ownedSet.has(item.id);
+              const isEquipped = equippedId === item.id;
+              const canAfford = coins >= item.price;
+              const cls = isEquipped ? "equipped" : isOwned ? "owned" : "locked";
+              const preview =
+                tab === "skins" ? item.emoji
+                : tab === "backgrounds" ? (
+                    <div className={item.className} style={{ width: 60, height: 60, borderRadius: 12 }} />
+                  )
+                : "🔊";
+
+              return (
+                <div className={`shop-item ${cls}`} key={item.id}>
+                  {isEquipped && <span className="badge">IN USE</span>}
+                  <div className="emoji">{preview}</div>
+                  <div className="name">{item.name}</div>
+                  <div className="price">{item.price === 0 ? "Free" : `🪙 ${item.price}`}</div>
+                  {isEquipped ? (
+                    <button className="btn-sm" disabled>Equipped</button>
+                  ) : isOwned ? (
+                    <button className="btn-sm" onClick={() => onEquip(tab, item.id)}>Equip</button>
+                  ) : (
+                    <button className="btn-sm" disabled={!canAfford} onClick={() => onBuy(tab, item)}>
+                      {canAfford ? "Buy" : "Locked"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    /* -------- 9. App (root) -------- */
+    function App() {
+      const loadSaved = () => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return null;
+          const s = JSON.parse(raw);
+          return {
+            ...s,
+            owned: {
+              skins:       new Set(s.owned?.skins       ?? ["default"]),
+              backgrounds: new Set(s.owned?.backgrounds ?? ["basic"]),
+              sounds:      new Set(s.owned?.sounds      ?? ["default"]),
+            },
+          };
+        } catch { return null; }
+      };
+      const saved = loadSaved();
+
+      const [screen, setScreen]     = useState("home");
+      const [shopOpen, setShopOpen] = useState(false);
+      const [coins, setCoins]       = useState(saved?.coins ?? 0);
+      const [skinId, setSkinId]     = useState(saved?.skinId ?? "default");
+      const [bgId, setBgId]         = useState(saved?.bgId ?? "basic");
+      const [soundId, setSoundId]   = useState(saved?.soundId ?? "default");
+      const [owned, setOwned]       = useState(saved?.owned ?? {
+        skins:       new Set(["default"]),
+        backgrounds: new Set(["basic"]),
+        sounds:      new Set(["default"]),
+      });
+
+      const [round, setRound]       = useState(1);
+      const [streak, setStreak]     = useState(0);
+      const [lastResult, setLastResult] = useState(null);
+
+      useEffect(() => {
+        const payload = {
+          coins, skinId, bgId, soundId,
+          owned: {
+            skins:       [...owned.skins],
+            backgrounds: [...owned.backgrounds],
+            sounds:      [...owned.sounds],
+          },
+        };
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); } catch {}
+      }, [coins, skinId, bgId, soundId, owned]);
+
+      const soundTone = useMemo(() =>
+        (SOUND_PACKS.find(s => s.id === soundId) || SOUND_PACKS[0]).tone,
+        [soundId]
+      );
+
+      const startGame = () => {
+        beep(soundTone, 520, 0.08);
+        setScreen("game");
+      };
+
+      const finishGame = ({ caught, rare }) => {
+        let earned = 0;
+        let newStreak = streak;
+        if (caught) {
+          earned = rare ? 50 : 10;
+          newStreak = streak + 1;
+          if (newStreak > 1) earned += clamp((newStreak - 1) * 2, 0, 20);
+          setCoins((c) => c + earned);
+          setStreak(newStreak);
+          beep(soundTone, 980, 0.15, 0.25);
+        } else {
+          setStreak(0);
+          beep(soundTone, 180, 0.3, 0.2);
+        }
+        setLastResult({ won: caught, rare, coinsEarned: earned, streakAtTime: newStreak });
+        setScreen("result");
+      };
+
+      const playAgain = () => {
+        setRound((r) => r + 1);
+        setScreen("game");
+      };
+
+      const goHome = () => {
+        setScreen("home");
+        setStreak(0);
+      };
+
+      const handleEquip = (tab, id) => {
+        if (tab === "skins")       setSkinId(id);
+        if (tab === "backgrounds") setBgId(id);
+        if (tab === "sounds")      setSoundId(id);
+        beep(soundTone, 520, 0.06);
+      };
+
+      const handleBuy = (tab, item) => {
+        if (coins < item.price) return;
+        setCoins((c) => c - item.price);
+        setOwned((o) => {
+          const next = { ...o, [tab]: new Set(o[tab]) };
+          next[tab].add(item.id);
+          return next;
+        });
+        beep(soundTone, 700, 0.1);
+        handleEquip(tab, item.id);
+      };
+
+      const handleShare = async () => {
+        const text = lastResult?.won
+          ? `I just caught the mouse in Catch It For Me 🐭 (+${lastResult.coinsEarned} coins${lastResult.rare ? ", RARE!" : ""}). My cat is unimpressed.`
+          : `The mouse escaped in Catch It For Me 🐭. My cat is judging me hard.`;
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: "Catch It For Me", text });
+          } else {
+            await navigator.clipboard.writeText(text);
+            alert("Copied result to clipboard!");
+          }
+        } catch { /* canceled */ }
+      };
+
+      const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
+
+      return (
+        <div className={`app ${bg.className}`}>
+          {screen !== "result" && (
+            <div className="top-bar">
+              <span className="coin-pill">🪙 {coins}</span>
+              <span />
+            </div>
+          )}
+
+          {screen === "home" && (
+            <HomeScreen skinId={skinId} onStart={startGame} onShop={() => setShopOpen(true)} />
+          )}
+
+          {screen === "game" && (
+            <GameScreen
+              key={round}
+              skinId={skinId}
+              roundNumber={round}
+              soundTone={soundTone}
+              onFinish={finishGame}
+            />
+          )}
+
+          {screen === "result" && lastResult && (
+            <ResultScreen
+              skinId={skinId}
+              won={lastResult.won}
+              rare={lastResult.rare}
+              coinsEarned={lastResult.coinsEarned}
+              streak={lastResult.streakAtTime}
+              onAgain={playAgain}
+              onHome={goHome}
+              onShare={handleShare}
+            />
+          )}
+
+          {shopOpen && (
+            <ShopScreen
+              coins={coins}
+              skinId={skinId}
+              bgId={bgId}
+              soundId={soundId}
+              owned={owned}
+              onClose={() => setShopOpen(false)}
+              onBuy={handleBuy}
+              onEquip={handleEquip}
+            />
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
