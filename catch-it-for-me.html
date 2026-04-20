@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#1a1033" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Catch It For Me</title>
 
   <!-- React + Babel via CDN. No build step. Just open this file in a browser. -->
@@ -13,22 +15,34 @@
 
   <style>
     /* =========================================================
-       Catch It For Me — Styles
-       Mobile-first. Bright, slightly chaotic. Big tap targets.
+       Catch It For Me — v2 polished mobile-game styles
+       Mobile-first. Neon / candy palette. Big tap targets.
        ========================================================= */
+
+    :root {
+      --accent:       #ff2d6f;
+      --accent-2:     #ffd23f;
+      --accent-3:     #29e3ff;
+      --purple:       #7b2cff;
+      --ink:          #140a2e;
+      --ink-2:        #1f0f42;
+      --radius:       18px;
+      --shadow-soft:  0 10px 30px rgba(0,0,0,0.35);
+      --pad-top:      max(14px, env(safe-area-inset-top));
+      --pad-bottom:   max(18px, env(safe-area-inset-bottom));
+    }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     html, body, #root {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
+      margin: 0; padding: 0;
+      height: 100%; width: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
+      font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", system-ui, sans-serif;
+      user-select: none; -webkit-user-select: none;
       touch-action: manipulation;
+      overscroll-behavior: none;
+      color: #fff;
     }
 
     button {
@@ -36,6 +50,7 @@
       cursor: pointer;
       border: none;
       outline: none;
+      color: inherit;
     }
 
     /* ---------- App shell ---------- */
@@ -47,220 +62,393 @@
       color: #fff;
     }
 
-    /* Backgrounds — unlockable themes */
-    .bg-basic    { background: linear-gradient(160deg, #ffe29f 0%, #ffa99f 50%, #ff719a 100%); }
-    .bg-luxury   { background: linear-gradient(160deg, #f7971e 0%, #ffd200 100%); }
-    .bg-haunted  { background: linear-gradient(160deg, #0f2027 0%, #203a43 50%, #2c5364 100%); }
-    .bg-neon     { background: linear-gradient(160deg, #2b0a3d 0%, #0f0c29 50%, #24243e 100%); }
+    /* Dynamic theme backgrounds with layered gradients + animated orbs */
+    .bg-basic    { background: radial-gradient(120% 80% at 20% 10%, #ffc8a2 0%, transparent 55%),
+                              radial-gradient(120% 80% at 90% 90%, #ff6ea1 0%, transparent 60%),
+                              linear-gradient(160deg, #ffb273 0%, #ff5e8a 55%, #c23d8e 100%); }
+    .bg-luxury   { background: radial-gradient(120% 80% at 15% 15%, #ffe493 0%, transparent 55%),
+                              radial-gradient(120% 80% at 85% 85%, #ff9a2c 0%, transparent 60%),
+                              linear-gradient(160deg, #ffd93b 0%, #ff8a00 100%); }
+    .bg-haunted  { background: radial-gradient(120% 80% at 20% 20%, #4b2a7a 0%, transparent 50%),
+                              radial-gradient(120% 80% at 80% 80%, #22c1c3 0%, transparent 55%),
+                              linear-gradient(160deg, #0e1038 0%, #1a0933 50%, #081327 100%); }
+    .bg-neon     { background: radial-gradient(120% 80% at 10% 20%, #ff2d95 0%, transparent 55%),
+                              radial-gradient(120% 80% at 90% 85%, #29e3ff 0%, transparent 55%),
+                              linear-gradient(160deg, #2b0a3d 0%, #0b0524 50%, #170645 100%); }
 
-    /* Subtle animated pattern for flair */
-    .app::before {
+    /* Slow-drifting orbs layer for depth */
+    .orbs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.55;
+      animation: floatOrb 18s ease-in-out infinite;
+    }
+    .orb.a { width: 280px; height: 280px; background: #ff2d95; top: -80px; left: -60px; }
+    .orb.b { width: 320px; height: 320px; background: #29e3ff; bottom: -100px; right: -80px; animation-duration: 22s; animation-delay: -6s; }
+    .orb.c { width: 220px; height: 220px; background: #ffd23f; top: 40%; left: 60%; animation-duration: 26s; animation-delay: -12s; opacity: 0.4; }
+    @keyframes floatOrb {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      50%      { transform: translate(40px, -30px) scale(1.15); }
+    }
+
+    /* Grain noise overlay (cheap, just dots) */
+    .app::after {
       content: "";
       position: absolute; inset: 0;
-      background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
-      background-size: 24px 24px;
+      background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 22px 22px;
       pointer-events: none;
-      animation: drift 18s linear infinite;
+      animation: drift 22s linear infinite;
+      z-index: 1;
     }
     @keyframes drift {
       from { background-position: 0 0; }
-      to   { background-position: 240px 240px; }
+      to   { background-position: 220px 220px; }
     }
 
-    /* ---------- Top bar (coins) ---------- */
+    /* ---------- Top HUD ---------- */
     .top-bar {
       position: absolute;
-      top: 0; left: 0; right: 0;
-      padding: 14px 16px;
+      top: var(--pad-top); left: 0; right: 0;
+      padding: 0 14px;
       display: flex; justify-content: space-between; align-items: center;
-      z-index: 20;
+      z-index: 30;
       pointer-events: none;
     }
-    .coin-pill {
-      background: rgba(0,0,0,0.35);
-      backdrop-filter: blur(6px);
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 16px;
-      display: flex; align-items: center; gap: 6px;
-      pointer-events: auto;
-    }
-    .timer-pill {
-      background: rgba(0,0,0,0.45);
-      backdrop-filter: blur(6px);
+    .pill {
+      background: rgba(20, 10, 46, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.14);
       padding: 8px 14px;
       border-radius: 999px;
       font-weight: 800;
-      font-size: 18px;
-      color: #fff;
+      font-size: 16px;
+      display: flex; align-items: center; gap: 6px;
       pointer-events: auto;
-      min-width: 54px; text-align: center;
+      box-shadow: var(--shadow-soft);
+      color: #fff;
+      letter-spacing: 0.3px;
     }
-    .timer-pill.low { color: #ff4b4b; animation: pulse 0.4s infinite alternate; }
-    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+    .coin-pill .count {
+      display: inline-block;
+      transition: transform 0.22s cubic-bezier(.2, 1.6, .4, 1);
+    }
+    .coin-pill.bump .count { transform: scale(1.35); color: var(--accent-2); text-shadow: 0 0 8px rgba(255,210,63,0.6); }
+
+    .streak-pill {
+      background: linear-gradient(135deg, #ff5f6d 0%, #ff9f2d 100%);
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 6px 20px rgba(255, 95, 109, 0.45);
+      animation: streakPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes streakPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(255, 95, 109, 0.45); }
+      50%      { transform: scale(1.06); box-shadow: 0 8px 28px rgba(255, 159, 45, 0.6); }
+    }
+
+    .timer-wrap {
+      position: absolute;
+      top: calc(var(--pad-top) + 56px);
+      left: 14px; right: 14px;
+      z-index: 30;
+      display: flex; flex-direction: column; gap: 6px;
+      pointer-events: none;
+    }
+    .timer-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(6px);
+    }
+    .timer-bar > span {
+      display: block; height: 100%;
+      background: linear-gradient(90deg, #29e3ff, #ffd23f, #ff2d6f);
+      border-radius: inherit;
+      transition: width 0.12s linear;
+      box-shadow: 0 0 8px rgba(255, 210, 63, 0.5);
+    }
+    .timer-bar.low > span { background: linear-gradient(90deg, #ff2d6f, #ff5f6d, #ff2d6f); animation: flash 0.35s infinite; }
+    @keyframes flash { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
 
     /* ---------- Screens ---------- */
     .screen {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 24px;
-      gap: 18px;
+      padding: calc(var(--pad-top) + 56px) 22px var(--pad-bottom);
+      gap: 16px;
       z-index: 10;
+      animation: screenIn 0.38s cubic-bezier(.2, 1.2, .3, 1);
     }
+    @keyframes screenIn {
+      0%   { opacity: 0; transform: translateY(14px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .screen h1 {
-      font-size: 44px;
+      font-size: clamp(40px, 11vw, 56px);
       margin: 0;
       text-align: center;
-      text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
-      letter-spacing: -1px;
+      letter-spacing: -1.5px;
+      font-weight: 900;
+      background: linear-gradient(180deg, #fff 0%, #ffd23f 60%, #ff8a00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(0,0,0,0.15);
+      filter: drop-shadow(0 6px 0 rgba(0,0,0,0.18)) drop-shadow(0 14px 22px rgba(255,120,60,0.35));
     }
     .screen h2 {
-      font-size: 28px;
+      font-size: 26px;
       margin: 0;
       text-align: center;
-      text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.25);
     }
-    .screen p { margin: 0; text-align: center; opacity: 0.95; }
+    .screen p {
+      margin: 0; text-align: center;
+      opacity: 0.92; font-size: 15px;
+      font-weight: 600;
+      max-width: 320px; line-height: 1.35;
+    }
 
-    /* Big tap-friendly buttons */
+    /* ---------- Buttons ---------- */
     .btn {
-      min-height: 56px;
+      min-height: 58px;
       padding: 14px 28px;
       font-size: 18px;
-      font-weight: 800;
-      border-radius: 16px;
+      font-weight: 900;
+      border-radius: 18px;
       color: #fff;
-      background: linear-gradient(180deg, #ff5f6d 0%, #ff2d55 100%);
-      box-shadow: 0 6px 0 #b2002c, 0 10px 20px rgba(0,0,0,0.25);
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
-      min-width: 200px;
+      background: linear-gradient(180deg, #ff5f8a 0%, #ff2d6f 100%);
+      box-shadow:
+        0 6px 0 #a10038,
+        0 12px 28px rgba(255, 45, 111, 0.45),
+        inset 0 1px 0 rgba(255,255,255,0.25);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.2s;
+      min-width: 220px;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.3px;
     }
-    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b2002c, 0 4px 10px rgba(0,0,0,0.25); }
-    .btn.secondary { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 6px 0 #0a6fa2, 0 10px 20px rgba(0,0,0,0.25); }
-    .btn.secondary:active { box-shadow: 0 2px 0 #0a6fa2, 0 4px 10px rgba(0,0,0,0.25); }
-    .btn.ghost { background: rgba(0,0,0,0.35); box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
-    .btn.ghost:active { box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
-    .btn:disabled { opacity: 0.5; filter: grayscale(0.5); }
+    .btn::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent 40%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #a10038, 0 4px 10px rgba(255,45,111,0.35); }
+    .btn.secondary { background: linear-gradient(180deg, #29e3ff 0%, #0099ff 100%); box-shadow: 0 6px 0 #0055a8, 0 12px 28px rgba(0, 153, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn.secondary:active { box-shadow: 0 2px 0 #0055a8, 0 4px 10px rgba(0,153,255,0.35); }
+    .btn.ghost { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 4px 0 rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
+    .btn.ghost:active { box-shadow: 0 1px 0 rgba(0,0,0,0.3); }
+    .btn.huge { min-width: 260px; font-size: 22px; min-height: 70px; border-radius: 22px; }
+    .btn:disabled { opacity: 0.55; filter: grayscale(0.6); }
 
     /* ---------- Cat ---------- */
     .cat {
-      font-size: 96px;
+      font-size: 112px;
       line-height: 1;
       position: relative;
-      filter: drop-shadow(0 6px 0 rgba(0,0,0,0.2));
+      filter: drop-shadow(0 6px 0 rgba(0,0,0,0.2)) drop-shadow(0 14px 22px rgba(0,0,0,0.35));
       transition: transform 0.2s ease;
     }
-    .cat.idle { animation: sway 2.6s ease-in-out infinite; }
-    @keyframes sway {
-      0%, 100% { transform: rotate(-4deg); }
-      50%      { transform: rotate(4deg); }
+    .cat.idle { animation: breathe 3s ease-in-out infinite; }
+    @keyframes breathe {
+      0%, 100% { transform: rotate(-3deg) scale(1); }
+      50%      { transform: rotate(3deg) scale(1.04); }
     }
     .cat.corner {
       position: absolute;
-      top: 60px; left: 12px;
-      font-size: 56px;
+      top: 14px; left: 10px;
+      font-size: 62px;
       z-index: 5;
+      animation: breathe 3s ease-in-out infinite;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5));
     }
 
     /* Speech bubble */
     .bubble {
       position: relative;
       background: #fff;
-      color: #222;
-      padding: 10px 14px;
-      border-radius: 14px;
-      max-width: 260px;
+      color: #150a2e;
+      padding: 12px 16px;
+      border-radius: 18px;
+      max-width: 290px;
       font-weight: 700;
-      font-size: 15px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      animation: bubblePop 0.3s ease;
+      font-size: 15.5px;
+      line-height: 1.3;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.04);
+      animation: bubblePop 0.32s cubic-bezier(.2, 1.8, .3, 1);
+      letter-spacing: 0.1px;
     }
     .bubble::after {
       content: "";
       position: absolute;
-      bottom: -8px; left: 24px;
-      border: 10px solid transparent;
+      bottom: -10px; left: 28px;
+      border: 11px solid transparent;
       border-top-color: #fff;
       border-bottom: 0;
+      filter: drop-shadow(0 6px 4px rgba(0,0,0,0.15));
     }
-    .bubble.corner { max-width: 200px; font-size: 13px; padding: 8px 12px; }
+    .bubble.corner { max-width: 220px; font-size: 13.5px; padding: 10px 13px; }
+    .bubble.corner::after { left: 18px; bottom: -8px; border-width: 9px; }
     @keyframes bubblePop {
-      0%   { transform: scale(0.6); opacity: 0; }
-      100% { transform: scale(1);   opacity: 1; }
+      0%   { transform: scale(0.55) rotate(-4deg); opacity: 0; }
+      70%  { transform: scale(1.06) rotate(1deg);  opacity: 1; }
+      100% { transform: scale(1) rotate(0);       opacity: 1; }
+    }
+
+    /* Hold-for-combo glow around cat during streak */
+    .cat.streaking {
+      filter: drop-shadow(0 0 14px rgba(255, 159, 45, 0.9))
+              drop-shadow(0 10px 18px rgba(0,0,0,0.4));
     }
 
     /* ---------- Mouse ---------- */
     .mouse {
       position: absolute;
-      font-size: 48px;
+      font-size: 54px;
       line-height: 1;
       z-index: 8;
-      transform: translate(-50%, -50%) scale(1);
-      transition: transform 0.18s cubic-bezier(.5, 1.6, .5, 1);
+      transform: translate(-50%, -50%);
       cursor: pointer;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      animation: wiggle 0.5s ease-in-out infinite alternate;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.4));
+      animation: spawnPop 0.28s cubic-bezier(.2, 1.8, .3, 1), wiggle 0.5s ease-in-out 0.28s infinite alternate;
     }
     @keyframes wiggle {
       from { transform: translate(-50%, -50%) rotate(-6deg); }
       to   { transform: translate(-50%, -50%) rotate(6deg); }
     }
+    @keyframes spawnPop {
+      0%   { transform: translate(-50%, -50%) scale(0) rotate(-40deg); opacity: 0; }
+      70%  { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1) rotate(0);      opacity: 1; }
+    }
     .mouse.rare {
-      filter: drop-shadow(0 0 12px gold) drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      animation: wiggle 0.3s ease-in-out infinite alternate, sparkle 1s linear infinite;
+      filter: drop-shadow(0 0 14px gold) drop-shadow(0 0 28px #ff9f2d) drop-shadow(0 6px 8px rgba(0,0,0,0.4));
+      animation: spawnPop 0.28s cubic-bezier(.2, 1.8, .3, 1),
+                 wiggle 0.32s ease-in-out 0.28s infinite alternate,
+                 sparkle 1.1s linear 0.28s infinite;
     }
     @keyframes sparkle {
       0%, 100% { text-shadow: 0 0 0 gold; }
-      50%      { text-shadow: 0 0 20px gold, 0 0 40px orange; }
+      50%      { text-shadow: 0 0 22px gold, 0 0 44px orange; }
     }
 
+    /* Little dust puff where the mouse lands */
+    .puff {
+      position: absolute;
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 70%);
+      transform: translate(-50%, -50%) scale(0.2);
+      animation: puffOut 0.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 7;
+    }
+    @keyframes puffOut {
+      0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(0.2); }
+      100% { opacity: 0;   transform: translate(-50%, -50%) scale(1.5); }
+    }
+
+    /* Floating coin popup */
     .coin-pop {
       position: absolute;
-      font-size: 22px;
-      font-weight: 800;
-      color: gold;
-      text-shadow: 1px 1px 0 #000;
+      font-size: 24px;
+      font-weight: 900;
+      color: #ffd23f;
+      text-shadow: 2px 2px 0 #6b3a00, 0 0 12px rgba(255,210,63,0.8);
       pointer-events: none;
-      animation: float 0.9s ease-out forwards;
+      animation: floatPop 1s cubic-bezier(.2,1.6,.3,1) forwards;
       z-index: 30;
+      letter-spacing: 0.5px;
     }
-    @keyframes float {
-      0%   { transform: translate(-50%, -50%) translateY(0);    opacity: 1; }
-      100% { transform: translate(-50%, -50%) translateY(-80px); opacity: 0; }
+    @keyframes floatPop {
+      0%   { transform: translate(-50%, -50%) translateY(0)  scale(0.4); opacity: 0; }
+      25%  { transform: translate(-50%, -50%) translateY(-10px) scale(1.3); opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-100px) scale(1);   opacity: 0; }
     }
 
-    .shake { animation: shake 0.5s; }
+    /* ---------- Confetti ---------- */
+    .confetti-wrap {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      overflow: hidden;
+    }
+    .confetti {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px; height: 14px;
+      border-radius: 2px;
+      opacity: 0;
+      animation: confettiBurst 1.1s ease-out forwards;
+    }
+    @keyframes confettiBurst {
+      0%   { transform: translate(-50%, -50%) rotate(0) scale(0.8); opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--tr)) scale(1); opacity: 0; }
+    }
+
+    /* ---------- Screen shake ---------- */
+    .shake { animation: shake 0.55s cubic-bezier(.36,.07,.19,.97); }
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%      { transform: translateX(-12px); }
-      40%      { transform: translateX(12px); }
-      60%      { transform: translateX(-8px); }
-      80%      { transform: translateX(8px); }
+      10%, 90% { transform: translateX(-2px); }
+      20%, 80% { transform: translateX( 4px); }
+      30%, 50%, 70% { transform: translateX(-8px); }
+      40%, 60% { transform: translateX( 8px); }
     }
 
     /* ---------- Shop ---------- */
     .shop {
       position: absolute; inset: 0;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(4px);
+      background: rgba(8, 3, 28, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: flex; flex-direction: column;
-      padding: 70px 12px 20px;
-      z-index: 40;
+      padding: calc(var(--pad-top) + 60px) 14px var(--pad-bottom);
+      z-index: 50;
+      animation: screenIn 0.34s cubic-bezier(.2, 1.2, .3, 1);
     }
-    .shop h2 { margin-bottom: 4px; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
-    .tabs { display: flex; gap: 8px; margin: 10px 0 14px; }
+    .shop h2 {
+      margin: 0 0 4px;
+      color: #fff;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+      text-align: center;
+      font-size: 28px;
+    }
+    .shop .sub {
+      text-align: center; font-weight: 700; font-size: 14px;
+      color: rgba(255,255,255,0.85); margin-bottom: 10px;
+    }
+    .tabs { display: flex; gap: 8px; margin: 6px 0 12px; }
     .tab {
       flex: 1;
-      padding: 10px;
-      background: rgba(255,255,255,0.12);
+      padding: 11px 8px;
+      background: rgba(255,255,255,0.1);
       color: #fff;
-      border-radius: 12px;
-      font-weight: 700;
+      border-radius: 14px;
+      font-weight: 800;
       font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: transform 0.12s ease, background 0.18s;
     }
-    .tab.active { background: #fff; color: #222; }
+    .tab.active {
+      background: #fff;
+      color: var(--ink);
+      border-color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    }
 
     .shop-grid {
       flex: 1;
@@ -268,145 +456,287 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       overflow-y: auto;
-      padding-bottom: 16px;
+      padding-bottom: 12px;
     }
     .shop-item {
-      background: rgba(255,255,255,0.94);
-      color: #222;
-      border-radius: 16px;
-      padding: 12px;
+      background: rgba(255,255,255,0.96);
+      color: var(--ink);
+      border-radius: 18px;
+      padding: 14px 10px 12px;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
       text-align: center;
       position: relative;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      animation: itemIn 0.3s cubic-bezier(.2,1.5,.3,1) both;
     }
-    .shop-item .emoji { font-size: 48px; line-height: 1; }
-    .shop-item .name { font-weight: 800; font-size: 14px; }
-    .shop-item .price { font-size: 13px; font-weight: 700; color: #c4851a; }
+    .shop-item:nth-child(1) { animation-delay: 0.00s; }
+    .shop-item:nth-child(2) { animation-delay: 0.04s; }
+    .shop-item:nth-child(3) { animation-delay: 0.08s; }
+    .shop-item:nth-child(4) { animation-delay: 0.12s; }
+    @keyframes itemIn {
+      0%   { opacity: 0; transform: translateY(14px) scale(0.94); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .shop-item .emoji { font-size: 52px; line-height: 1; }
+    .shop-item .name { font-weight: 900; font-size: 14px; letter-spacing: 0.2px; }
+    .shop-item .price { font-size: 13px; font-weight: 800; color: #c4851a; }
     .shop-item .btn-sm {
       margin-top: 4px;
       padding: 8px 14px;
       font-size: 13px;
-      font-weight: 700;
-      border-radius: 10px;
-      background: #4facfe;
+      font-weight: 800;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #29e3ff, #0099ff);
       color: #fff;
-      min-height: 36px;
+      min-height: 38px;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+      letter-spacing: 0.3px;
     }
-    .shop-item.locked .btn-sm { background: #ffb74d; color: #222; }
-    .shop-item.equipped .btn-sm { background: #888; }
-    .shop-item.owned .btn-sm { background: #4caf50; }
+    .shop-item .btn-sm:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+    .shop-item.locked .btn-sm { background: linear-gradient(180deg, #ffd36a, #ffb743); color: #5a3b00; }
+    .shop-item.equipped .btn-sm { background: #aaa; }
+    .shop-item.owned .btn-sm { background: linear-gradient(180deg, #7ae25e, #3ba329); }
 
     .badge {
       position: absolute;
-      top: 6px; right: 6px;
-      background: #4caf50;
+      top: 8px; right: 8px;
+      background: linear-gradient(180deg, #7ae25e, #3ba329);
       color: white;
       font-size: 10px;
-      padding: 3px 6px;
-      border-radius: 6px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
+      padding: 3px 7px;
+      border-radius: 8px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
     .close-x {
       position: absolute;
-      top: 12px; right: 12px;
-      width: 40px; height: 40px;
+      top: calc(var(--pad-top) + 10px); right: 14px;
+      width: 42px; height: 42px;
       border-radius: 50%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.24);
+      backdrop-filter: blur(10px);
       color: #fff;
       font-size: 20px;
-      font-weight: 800;
-      z-index: 50;
-    }
-
-    .home-stack { display: flex; flex-direction: column; gap: 12px; align-items: center; }
-
-    .result-big {
-      font-size: 72px;
       font-weight: 900;
-      letter-spacing: -2px;
-      text-shadow: 4px 4px 0 rgba(0,0,0,0.3);
-      margin-bottom: 0;
+      z-index: 60;
+      box-shadow: var(--shadow-soft);
     }
-    .result-big.win  { color: #ffe066; }
+
+    .home-stack { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; max-width: 340px; }
+
+    /* ---------- Result screen ---------- */
+    .result-big {
+      font-size: clamp(60px, 17vw, 96px);
+      font-weight: 900;
+      letter-spacing: -3px;
+      text-shadow: 4px 4px 0 rgba(0,0,0,0.3), 0 14px 24px rgba(0,0,0,0.35);
+      margin-bottom: 0;
+      animation: bigIn 0.5s cubic-bezier(.2,1.8,.3,1);
+    }
+    @keyframes bigIn {
+      0%   { transform: scale(0.2) rotate(-12deg); opacity: 0; }
+      60%  { transform: scale(1.15) rotate(3deg);  opacity: 1; }
+      100% { transform: scale(1) rotate(0);        opacity: 1; }
+    }
+    .result-big.win  {
+      background: linear-gradient(180deg, #fff 0%, #ffd23f 60%, #ff8a00 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 6px 0 rgba(0,0,0,0.2));
+    }
     .result-big.fail { color: #ff5c5c; }
     .reward {
-      background: rgba(0,0,0,0.35);
-      padding: 10px 20px;
-      border-radius: 14px;
+      background: rgba(20,10,46,0.55);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 12px 22px;
+      border-radius: 16px;
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
+      box-shadow: var(--shadow-soft);
+      text-align: center;
     }
 
-    .btn.huge { min-width: 240px; font-size: 22px; min-height: 68px; border-radius: 20px; }
-
-    .bouncy { animation: bounce 2.2s ease-in-out infinite; }
+    .bouncy { animation: bounce 2.6s ease-in-out infinite; }
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-6px); }
+      50%      { transform: translateY(-8px); }
     }
 
-    /* Simple loading / offline-CDN fallback message */
+    /* Fallback while booting */
     #boot-warning {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 24px; color: #222;
       font-family: system-ui, sans-serif;
       background: #ffd36a;
+      font-weight: 700;
     }
   </style>
 </head>
 <body>
   <div id="root">
-    <!-- Shown only until React boots. If you see this, the CDN didn't load — check your internet. -->
     <div id="boot-warning">
-      Loading the game… If this message stays visible, your browser may be offline or blocking the React CDN scripts.
+      Loading… If this sticks around, your browser may be blocking the React CDN (check your internet).
     </div>
   </div>
 
   <script type="text/babel" data-type="module">
     /* =============================================================
-       Catch It For Me — All game logic (single-file build)
-       Sections:
-         1. Constants & content
-         2. Sound helper (Web Audio — no asset files)
-         3. CatCharacter + speech bubble
-         4. Mouse (tappable target)
-         5. HomeScreen
-         6. GameScreen (round timer, jumps, rare spawn)
-         7. ResultScreen (win/fail + share)
-         8. ShopScreen (Skins / Backgrounds / Sounds tabs)
-         9. App (state + localStorage persistence)
+       Catch It For Me v2 — polished, TikTok-voiced sarcastic cat
+       Single-file build. Zero dependencies beyond CDN React/Babel.
        ============================================================= */
 
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
     /* -------- 1. CONSTANTS & CONTENT -------- */
+
+    // Cat dialogue — MUCH chonkier libraries, TikTok / Gen Z tone.
+    // Each event picks a random line. Multiple categories for context.
     const CAT_LINES = {
-      start: [
-        "I brought it. You finish the job.",
-        "I'm not getting up for this.",
-        "Dinner is served. Allegedly.",
-        "Your turn, two-legs.",
-      ],
-      fail: [
-        "Wow. That was embarrassing.",
-        "It's literally right there.",
-        "The mouse is smarter than you.",
-        "I've seen houseplants with better reflexes.",
-      ],
-      win: [
-        "Acceptable.",
-        "You got lucky.",
-        "Don't get used to it.",
-        "Fine. I'm mildly impressed.",
+      first_ever: [
+        "oh. it's you. i've heard... things.",
+        "hi bestie. welcome. the mouse is already plotting.",
+        "new owner unlocked. let's see if you're mid or elite.",
       ],
       home: [
-        "Another mouse already? Ugh, fine.",
-        "Ready when you are. Probably.",
-        "I'll supervise.",
+        "bestie please. the mouse is RIGHT there.",
+        "not me bringing you breakfast and you scrolling.",
+        "POV: i'm your cat and you're slacking.",
+        "tap start. i cannot keep yapping about this.",
+        "the mouse isn't gonna catch itself, babe.",
+        "i woke up and chose chaos. your move.",
+        "i could be napping. i CHOSE this for you.",
+        "okay but like... the longer you wait the more i judge you.",
+      ],
+      shop_open: [
+        "ooh retail therapy. drop the coins.",
+        "i need the business fit. it's for my LinkedIn.",
+        "buy me something nice. or don't. whatever. 🙄",
+        "the audacity of shopping without buying me something.",
+        "wallet out bestie, it's a PARADE.",
+      ],
+      shop_buy: [
+        "iconic purchase. absolute slay.",
+        "okay taste level: concerning but acceptable.",
+        "we love spending money we earned poorly.",
+        "i'll allow it.",
+        "you in your drip era. proud. ish.",
+      ],
+      shop_equip: [
+        "okay now THAT is a look.",
+        "fit check: mid → slightly less mid.",
+        "serving. barely. but serving.",
+      ],
+      shop_cant_afford: [
+        "broke behavior. go catch more.",
+        "the bank said NO 💀",
+        "maybe if you... won sometimes?",
+        "girl this isn't a charity.",
+      ],
+      round_start: [
+        "okay go. i'll be live-tweeting this.",
+        "three. two. one. don't embarrass me.",
+        "i brought it. i tied a bow. GO.",
+        "commentary mode: ON.",
+        "eyes up, slow-hands.",
+        "don't fumble the bag. or the mouse.",
+        "bestie focus. i need this W.",
+        "you got this. probably. maybe. idk.",
+      ],
+      round_start_rare: [
+        "🚨 RARE MOUSE. do NOT fumble.",
+        "okay this is a test from the universe. PASS IT.",
+        "the gold one?? if you miss i will unalive.",
+        "bestie. this is cinema. do NOT ruin it.",
+        "50 coin mouse. i repeat: FIFTY.",
+      ],
+      mid_round: [
+        "tick tock bestie 🕒",
+        "are you... okay?",
+        "breathe. then tap.",
+        "it's literally moving in a pattern.",
+        "i'm sweating and i have FUR.",
+      ],
+      time_low: [
+        "BFFR",
+        "you're COOKED",
+        "NOT LIKE THIS",
+        "tap tap tap tap TAP",
+        "i'm gonna need therapy after this",
+      ],
+      win: [
+        "okay slay 💅",
+        "10/10 no notes (jk i have so many)",
+        "fine. minimal applause. 👏",
+        "cute. again? or are we crashing out?",
+        "respectfully, i expected less.",
+        "chat we are eating GOOD",
+        "look at you. employed.",
+        "i'm proud. ish. don't make it weird.",
+        "mother. you had it in you.",
+        "W secured. barely.",
+      ],
+      win_streak_2: [
+        "wait. back-to-back??",
+        "two in a row is wild for you.",
+        "okay maybe you DO have hands.",
+        "the plot thickens 🎬",
+      ],
+      win_streak_3: [
+        "you're cooking?? in MY kitchen??",
+        "girl. i might have to update my rent.",
+        "this is a lore moment fr.",
+        "chat is this real 😭",
+        "the mouse is FILING A COMPLAINT.",
+      ],
+      win_rare: [
+        "MY GOLD ONE. YOU CAUGHT MY GOLD ONE.",
+        "sobbing. crying. throwing up.",
+        "i need a minute. that was everything.",
+        "bestie THIS is the video.",
+        "I'M. YELLING. this is my roman empire.",
+      ],
+      fail: [
+        "it's giving 'slow.'",
+        "not the MOUSE escaping 💀",
+        "the disrespect was IMMACULATE.",
+        "respectfully what was THAT.",
+        "my therapist is hearing about this.",
+        "bestie we need to TALK.",
+        "the way i'm SPEECHLESS.",
+        "i'm gonna need a moment.",
+        "ooof. skill issue.",
+        "babe. babe. what.",
+        "that was public. everyone saw that.",
+      ],
+      fail_streak_2: [
+        "twice?? in a ROW??",
+        "oh. we're not okay.",
+        "calling HR on you.",
+        "the mouse posted about this.",
+      ],
+      fail_streak_3: [
+        "i'm unionizing. you're the worst boss.",
+        "new fear unlocked: your reflexes.",
+        "go touch some grass. please. for me.",
+        "this is elder abuse (i'm 14 in cat years).",
+        "i'm calling my ex. this can't be fixed.",
+      ],
+      fail_rare: [
+        "THE GOLD ONE?? bestie no.",
+        "you had 50 coins on a STRING.",
+        "i'm blocking you.",
+        "this is the ending of the relationship.",
+      ],
+      idle_too_long: [
+        "still there?",
+        "bestie. please. i'm aging.",
+        "if you're scrolling TikTok i swear.",
+        "hello?? the mouse is growing old.",
       ],
     };
 
@@ -418,10 +748,10 @@
     ];
 
     const BACKGROUNDS = [
-      { id: "basic",   name: "Basic Room",   className: "bg-basic",   price: 0 },
-      { id: "luxury",  name: "Luxury Room",  className: "bg-luxury",  price: 150 },
-      { id: "haunted", name: "Haunted Room", className: "bg-haunted", price: 300 },
-      { id: "neon",    name: "Neon Room",    className: "bg-neon",    price: 600 },
+      { id: "basic",   name: "Cozy Pink",   className: "bg-basic",   price: 0 },
+      { id: "luxury",  name: "Gold Suite",  className: "bg-luxury",  price: 150 },
+      { id: "haunted", name: "Haunted",     className: "bg-haunted", price: 300 },
+      { id: "neon",    name: "Neon Club",   className: "bg-neon",    price: 600 },
     ];
 
     const SOUND_PACKS = [
@@ -430,11 +760,11 @@
       { id: "techno",  name: "Techno Pack", price: 400, tone: "sawtooth" },
     ];
 
-    const STORAGE_KEY = "catch-it-for-me/v1";
+    const STORAGE_KEY = "catch-it-for-me/v2";
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-    /* -------- 2. SOUND HELPER -------- */
+    /* -------- 2. SOUND + HAPTICS -------- */
     const audioCtxRef = { current: null };
     function beep(tone = "sine", freq = 660, dur = 0.08, vol = 0.15) {
       try {
@@ -453,83 +783,140 @@
         osc.stop(ctx.currentTime + dur);
       } catch (e) { /* audio non-critical */ }
     }
+    function haptic(pattern = 12) {
+      try { if (navigator.vibrate) navigator.vibrate(pattern); } catch {}
+    }
 
-    /* -------- 3. CatCharacter -------- */
-    function CatCharacter({ skinId, message, corner = false }) {
+    /* -------- 3. Confetti helper -------- */
+    // Generate a burst of ~36 confetti with random directions.
+    function Confetti({ keySeed }) {
+      const pieces = useMemo(() => {
+        const colors = ["#ff2d6f", "#ffd23f", "#29e3ff", "#7b2cff", "#7ae25e", "#fff"];
+        return new Array(36).fill(0).map((_, i) => {
+          const angle = Math.random() * Math.PI * 2;
+          const dist  = 120 + Math.random() * 220;
+          return {
+            id: i,
+            color: colors[i % colors.length],
+            tx: `${Math.cos(angle) * dist}px`,
+            ty: `${Math.sin(angle) * dist}px`,
+            tr: `${(Math.random() * 720 - 360)}deg`,
+            delay: `${Math.random() * 0.08}s`,
+          };
+        });
+      }, [keySeed]);
+      return (
+        <div className="confetti-wrap" key={keySeed}>
+          {pieces.map(p => (
+            <span
+              key={p.id}
+              className="confetti"
+              style={{
+                background: p.color,
+                "--tx": p.tx,
+                "--ty": p.ty,
+                "--tr": p.tr,
+                animationDelay: p.delay,
+              }}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    /* -------- 4. CatCharacter -------- */
+    function CatCharacter({ skinId, message, corner = false, streaking = false }) {
       const skin = CAT_SKINS.find((s) => s.id === skinId) || CAT_SKINS[0];
       return (
         <div style={corner
-          ? { position: "absolute", top: 60, left: 12, zIndex: 6 }
-          : { display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          ? { position: "absolute", top: "calc(var(--pad-top) + 56px)", left: 10, zIndex: 6, display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }
+          : { display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           {message && (
             <div className={`bubble ${corner ? "corner" : ""}`} key={message}>
               {message}
             </div>
           )}
-          <div className={`cat ${corner ? "corner" : "idle"}`}
-               style={corner ? { position: "static", fontSize: 56 } : null}>
+          <div className={`cat ${corner ? "corner" : "idle"} ${streaking ? "streaking" : ""}`}
+               style={corner ? { position: "static", fontSize: 62 } : null}>
             {skin.emoji}
           </div>
         </div>
       );
     }
 
-    /* -------- 4. Mouse -------- */
+    /* -------- 5. Mouse -------- */
     function Mouse({ x, y, rare, onTap }) {
       return (
-        <div
-          className={`mouse ${rare ? "rare" : ""}`}
-          style={{ left: `${x}%`, top: `${y}%` }}
-          onClick={onTap}
-          onTouchStart={(e) => { e.preventDefault(); onTap(); }}
-          role="button"
-          aria-label="mouse"
-        >
-          {rare ? "🐭" : "🐁"}
-        </div>
+        <>
+          <span className="puff" style={{ left: `${x}%`, top: `${y}%` }} key={`${x}-${y}-puff`} />
+          <div
+            className={`mouse ${rare ? "rare" : ""}`}
+            style={{ left: `${x}%`, top: `${y}%` }}
+            onClick={onTap}
+            onTouchStart={(e) => { e.preventDefault(); onTap(); }}
+            role="button"
+            aria-label="mouse"
+          >
+            {rare ? "🐭" : "🐁"}
+          </div>
+        </>
       );
     }
 
-    /* -------- 5. HomeScreen -------- */
-    function HomeScreen({ skinId, onStart, onShop }) {
-      const [msg] = useState(() => pick(CAT_LINES.home));
+    /* -------- 6. HomeScreen -------- */
+    function HomeScreen({ skinId, coins, onStart, onShop, firstEver }) {
+      const [msg, setMsg] = useState(() => pick(firstEver ? CAT_LINES.first_ever : CAT_LINES.home));
+      const idleRef = useRef(null);
+
+      // If player stays on home > 8s, cat nags again.
+      useEffect(() => {
+        idleRef.current = setTimeout(() => setMsg(pick(CAT_LINES.idle_too_long)), 8500);
+        return () => clearTimeout(idleRef.current);
+      }, [msg]);
+
       return (
         <div className="screen">
           <h1 className="bouncy">Catch It For Me</h1>
           <p>Your cat refuses to do its job. Tap the mouse before it escapes.</p>
           <CatCharacter skinId={skinId} message={msg} />
           <div className="home-stack">
-            <button className="btn huge" onClick={onStart}>Start Hunt 🐭</button>
-            <button className="btn secondary" onClick={onShop}>Shop 🛍️</button>
+            <button className="btn huge" onClick={() => { haptic(18); onStart(); }}>
+              Start Hunt 🐭
+            </button>
+            <button className="btn secondary" onClick={() => { haptic(12); onShop(); }}>
+              Shop 🛍️
+            </button>
           </div>
         </div>
       );
     }
 
-    /* -------- 6. GameScreen -------- */
-    function GameScreen({ skinId, roundNumber, soundTone, onFinish }) {
+    /* -------- 7. GameScreen -------- */
+    function GameScreen({ skinId, roundNumber, streak, soundTone, onFinish }) {
       const durationMs = useMemo(() => 5000 + Math.random() * 5000, [roundNumber]);
       const jumpMs = useMemo(
         () => clamp(1100 - roundNumber * 60, 300, 1200) - Math.random() * 200,
         [roundNumber]
       );
-      const isRare = useMemo(() => Math.random() < 0.12, [roundNumber]);
+      const isRare = useMemo(() => Math.random() < 0.14, [roundNumber]);
 
       const [pos, setPos] = useState({ x: 50, y: 60 });
       const [remaining, setRemaining] = useState(durationMs);
       const [startedAt] = useState(() => performance.now());
       const [coinPop, setCoinPop] = useState(null);
-      const [startMsg, setStartMsg] = useState(() => pick(CAT_LINES.start));
+      const [startMsg, setStartMsg] = useState(() => pick(isRare ? CAT_LINES.round_start_rare : CAT_LINES.round_start));
       const finishedRef = useRef(false);
+      const midFiredRef = useRef(false);
+      const lowFiredRef = useRef(false);
 
-      // Hide opener after ~1.8s
+      // Opener fades out after ~1.8s
       useEffect(() => {
         const t = setTimeout(() => setStartMsg(null), 1800);
         return () => clearTimeout(t);
       }, []);
 
       const reposition = useCallback(() => {
-        setPos({ x: 10 + Math.random() * 80, y: 25 + Math.random() * 60 });
+        setPos({ x: 10 + Math.random() * 80, y: 30 + Math.random() * 55 });
       }, []);
 
       useEffect(() => {
@@ -540,11 +927,27 @@
 
       useEffect(() => {
         const tick = setInterval(() => {
-          const left = durationMs - (performance.now() - startedAt);
+          const elapsed = performance.now() - startedAt;
+          const left = durationMs - elapsed;
+
+          // Mid-round taunt (~50%)
+          if (!midFiredRef.current && elapsed > durationMs * 0.5) {
+            midFiredRef.current = true;
+            setStartMsg(pick(CAT_LINES.mid_round));
+            setTimeout(() => setStartMsg(null), 1500);
+          }
+          // Time-low taunt
+          if (!lowFiredRef.current && left < 2000) {
+            lowFiredRef.current = true;
+            setStartMsg(pick(CAT_LINES.time_low));
+            setTimeout(() => setStartMsg(null), 1400);
+          }
+
           if (left <= 0) {
             clearInterval(tick);
             if (!finishedRef.current) {
               finishedRef.current = true;
+              haptic([40, 60, 40]);
               onFinish({ caught: false, rare: isRare });
             }
           } else {
@@ -557,60 +960,83 @@
       const handleTap = () => {
         if (finishedRef.current) return;
         finishedRef.current = true;
-        beep(soundTone, isRare ? 1100 : 880, 0.12, 0.2);
+        beep(soundTone, isRare ? 1100 : 880, 0.14, 0.22);
+        haptic(isRare ? [10, 40, 10, 40, 20] : 25);
         setCoinPop({ x: pos.x, y: pos.y, text: isRare ? "+50" : "+10" });
-        setTimeout(() => onFinish({ caught: true, rare: isRare }), 450);
+        setTimeout(() => onFinish({ caught: true, rare: isRare }), 480);
       };
 
       const secondsLeft = Math.max(0, remaining / 1000);
+      const pct = clamp((remaining / durationMs) * 100, 0, 100);
 
       return (
-        <div className="screen" style={{ justifyContent: "flex-start", paddingTop: 110 }}>
-          <CatCharacter skinId={skinId} message={startMsg} corner />
+        <div className="screen" style={{ justifyContent: "flex-start", paddingTop: "calc(var(--pad-top) + 110px)" }}>
+          <CatCharacter skinId={skinId} message={startMsg} corner streaking={streak >= 2} />
           <Mouse x={pos.x} y={pos.y} rare={isRare} onTap={handleTap} />
           {coinPop && (
             <div className="coin-pop" style={{ left: `${coinPop.x}%`, top: `${coinPop.y}%` }}>
               {coinPop.text} 🪙
             </div>
           )}
-          <div className="top-bar" style={{ top: 58 }}>
-            <span />
-            <span className={`timer-pill ${secondsLeft < 2 ? "low" : ""}`}>
-              {secondsLeft.toFixed(1)}s
-            </span>
+
+          <div className="timer-wrap">
+            <div className={`timer-bar ${secondsLeft < 2 ? "low" : ""}`}>
+              <span style={{ width: `${pct}%` }} />
+            </div>
           </div>
         </div>
       );
     }
 
-    /* -------- 7. ResultScreen -------- */
-    function ResultScreen({ skinId, won, rare, coinsEarned, streak, onAgain, onHome, onShare }) {
-      const [msg] = useState(() => pick(won ? CAT_LINES.win : CAT_LINES.fail));
+    /* -------- 8. ResultScreen -------- */
+    function ResultScreen({ skinId, won, rare, coinsEarned, streak, prevStreak, onAgain, onHome, onShare }) {
+      const [msg] = useState(() => {
+        if (won) {
+          if (rare) return pick(CAT_LINES.win_rare);
+          if (streak >= 3) return pick(CAT_LINES.win_streak_3);
+          if (streak === 2) return pick(CAT_LINES.win_streak_2);
+          return pick(CAT_LINES.win);
+        } else {
+          if (rare) return pick(CAT_LINES.fail_rare);
+          if (prevStreak >= 2) return pick(CAT_LINES.fail_streak_3);
+          if (prevStreak === 1) return pick(CAT_LINES.fail_streak_2);
+          return pick(CAT_LINES.fail);
+        }
+      });
+
       return (
         <div className={`screen ${won ? "" : "shake"}`}>
+          {won && <Confetti keySeed={coinsEarned + streak} />}
           <h1 className={`result-big ${won ? "win" : "fail"}`}>
             {won ? "CAUGHT!" : "ESCAPED!"}
           </h1>
-          <CatCharacter skinId={skinId} message={msg} />
+          <CatCharacter skinId={skinId} message={msg} streaking={streak >= 2} />
           {won && (
             <div className="reward">
-              +{coinsEarned} 🪙
-              {rare && <span> (rare bonus!)</span>}
-              {streak > 1 && <div style={{ fontSize: 14, marginTop: 4, opacity: 0.9 }}>🔥 Streak x{streak}</div>}
+              <div style={{ fontSize: 22, fontWeight: 900, color: "#ffd23f" }}>
+                +{coinsEarned} 🪙 {rare && <span style={{ color: "#ff8a00" }}>(RARE!)</span>}
+              </div>
+              {streak > 1 && (
+                <div style={{ fontSize: 14, marginTop: 4, opacity: 0.95 }}>
+                  {"🔥".repeat(Math.min(5, streak))} streak ×{streak}
+                </div>
+              )}
             </div>
           )}
           <div className="home-stack">
-            <button className="btn" onClick={onAgain}>Play Again</button>
-            <button className="btn secondary" onClick={onHome}>Home</button>
+            <button className="btn" onClick={() => { haptic(14); onAgain(); }}>Play Again</button>
+            <button className="btn secondary" onClick={() => { haptic(12); onHome(); }}>Home</button>
             <button className="btn ghost" onClick={onShare}>Share Result 📤</button>
           </div>
         </div>
       );
     }
 
-    /* -------- 8. ShopScreen -------- */
+    /* -------- 9. ShopScreen -------- */
     function ShopScreen({ coins, skinId, bgId, soundId, owned, onClose, onBuy, onEquip }) {
       const [tab, setTab] = useState("skins");
+      const [catMsg, setCatMsg] = useState(() => pick(CAT_LINES.shop_open));
+
       const catalog = tab === "skins" ? CAT_SKINS
                     : tab === "backgrounds" ? BACKGROUNDS
                     : SOUND_PACKS;
@@ -619,19 +1045,29 @@
 
       return (
         <div className="shop">
-          <button className="close-x" onClick={onClose} aria-label="close">✕</button>
+          <button className="close-x" onClick={() => { haptic(10); onClose(); }} aria-label="close">✕</button>
           <h2>Shop</h2>
-          <div style={{ textAlign: "center", fontWeight: 700 }}>Coins: 🪙 {coins}</div>
+          <div className="sub">🪙 {coins}</div>
+
+          {/* Cat commenting on your shopping habits */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            <div className="bubble corner" style={{ maxWidth: 280 }}>{catMsg}</div>
+          </div>
 
           <div className="tabs">
-            {["skins", "backgrounds", "sounds"].map((t) => (
-              <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
-                {t[0].toUpperCase() + t.slice(1)}
+            {[
+              { id: "skins",       label: "Skins 🐾" },
+              { id: "backgrounds", label: "Rooms 🏠" },
+              { id: "sounds",      label: "Sounds 🔊" },
+            ].map((t) => (
+              <button key={t.id} className={`tab ${tab === t.id ? "active" : ""}`}
+                onClick={() => { haptic(8); setTab(t.id); }}>
+                {t.label}
               </button>
             ))}
           </div>
 
-          <div className="shop-grid">
+          <div className="shop-grid" key={tab /* retrigger item stagger */}>
             {catalog.map((item) => {
               const isOwned = ownedSet.has(item.id);
               const isEquipped = equippedId === item.id;
@@ -640,9 +1076,23 @@
               const preview =
                 tab === "skins" ? item.emoji
                 : tab === "backgrounds" ? (
-                    <div className={item.className} style={{ width: 60, height: 60, borderRadius: 12 }} />
+                    <div className={item.className} style={{ width: 64, height: 64, borderRadius: 14, boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.1)" }} />
                   )
                 : "🔊";
+
+              const handleAction = () => {
+                if (isEquipped) return;
+                if (isOwned) {
+                  onEquip(tab, item.id);
+                  setCatMsg(pick(CAT_LINES.shop_equip));
+                } else if (canAfford) {
+                  onBuy(tab, item);
+                  setCatMsg(pick(CAT_LINES.shop_buy));
+                } else {
+                  setCatMsg(pick(CAT_LINES.shop_cant_afford));
+                }
+                haptic(12);
+              };
 
               return (
                 <div className={`shop-item ${cls}`} key={item.id}>
@@ -650,15 +1100,11 @@
                   <div className="emoji">{preview}</div>
                   <div className="name">{item.name}</div>
                   <div className="price">{item.price === 0 ? "Free" : `🪙 ${item.price}`}</div>
-                  {isEquipped ? (
-                    <button className="btn-sm" disabled>Equipped</button>
-                  ) : isOwned ? (
-                    <button className="btn-sm" onClick={() => onEquip(tab, item.id)}>Equip</button>
-                  ) : (
-                    <button className="btn-sm" disabled={!canAfford} onClick={() => onBuy(tab, item)}>
-                      {canAfford ? "Buy" : "Locked"}
-                    </button>
-                  )}
+                  <button className="btn-sm"
+                    disabled={isEquipped || (!isOwned && !canAfford)}
+                    onClick={handleAction}>
+                    {isEquipped ? "Equipped" : isOwned ? "Equip" : (canAfford ? "Buy" : "Locked")}
+                  </button>
                 </div>
               );
             })}
@@ -667,7 +1113,7 @@
       );
     }
 
-    /* -------- 9. App (root) -------- */
+    /* -------- 10. App (root) -------- */
     function App() {
       const loadSaved = () => {
         try {
@@ -685,6 +1131,7 @@
         } catch { return null; }
       };
       const saved = loadSaved();
+      const firstEver = !saved;
 
       const [screen, setScreen]     = useState("home");
       const [shopOpen, setShopOpen] = useState(false);
@@ -701,6 +1148,14 @@
       const [round, setRound]       = useState(1);
       const [streak, setStreak]     = useState(0);
       const [lastResult, setLastResult] = useState(null);
+
+      // Coin bump animation trigger
+      const [coinBump, setCoinBump] = useState(false);
+      const bumpCoins = (n) => {
+        setCoins((c) => c + n);
+        setCoinBump(true);
+        setTimeout(() => setCoinBump(false), 260);
+      };
 
       useEffect(() => {
         const payload = {
@@ -726,19 +1181,20 @@
 
       const finishGame = ({ caught, rare }) => {
         let earned = 0;
+        const prevStreak = streak;
         let newStreak = streak;
         if (caught) {
           earned = rare ? 50 : 10;
           newStreak = streak + 1;
           if (newStreak > 1) earned += clamp((newStreak - 1) * 2, 0, 20);
-          setCoins((c) => c + earned);
+          bumpCoins(earned);
           setStreak(newStreak);
           beep(soundTone, 980, 0.15, 0.25);
         } else {
           setStreak(0);
           beep(soundTone, 180, 0.3, 0.2);
         }
-        setLastResult({ won: caught, rare, coinsEarned: earned, streakAtTime: newStreak });
+        setLastResult({ won: caught, rare, coinsEarned: earned, streakAtTime: newStreak, prevStreak });
         setScreen("result");
       };
 
@@ -773,31 +1229,40 @@
 
       const handleShare = async () => {
         const text = lastResult?.won
-          ? `I just caught the mouse in Catch It For Me 🐭 (+${lastResult.coinsEarned} coins${lastResult.rare ? ", RARE!" : ""}). My cat is unimpressed.`
-          : `The mouse escaped in Catch It For Me 🐭. My cat is judging me hard.`;
+          ? `caught the mouse in Catch It For Me 🐭 (+${lastResult.coinsEarned} coins${lastResult.rare ? ", RARE!" : ""}). my cat is unimpressed.`
+          : `the mouse escaped in Catch It For Me 🐭. my cat is judging me HARD.`;
         try {
-          if (navigator.share) {
-            await navigator.share({ title: "Catch It For Me", text });
-          } else {
-            await navigator.clipboard.writeText(text);
-            alert("Copied result to clipboard!");
-          }
-        } catch { /* canceled */ }
+          if (navigator.share) await navigator.share({ title: "Catch It For Me", text });
+          else { await navigator.clipboard.writeText(text); alert("Copied result to clipboard!"); }
+        } catch {}
       };
 
       const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
 
       return (
         <div className={`app ${bg.className}`}>
+          <div className="orbs" aria-hidden>
+            <div className="orb a" />
+            <div className="orb b" />
+            <div className="orb c" />
+          </div>
+
+          {/* HUD: coins + streak */}
           {screen !== "result" && (
             <div className="top-bar">
-              <span className="coin-pill">🪙 {coins}</span>
-              <span />
+              <span className={`pill coin-pill ${coinBump ? "bump" : ""}`}>
+                🪙 <span className="count">{coins}</span>
+              </span>
+              {streak >= 2 && screen === "game" && (
+                <span className="pill streak-pill">🔥 ×{streak}</span>
+              )}
+              {screen !== "game" && <span />}
             </div>
           )}
 
           {screen === "home" && (
-            <HomeScreen skinId={skinId} onStart={startGame} onShop={() => setShopOpen(true)} />
+            <HomeScreen skinId={skinId} coins={coins} firstEver={firstEver}
+              onStart={startGame} onShop={() => setShopOpen(true)} />
           )}
 
           {screen === "game" && (
@@ -805,6 +1270,7 @@
               key={round}
               skinId={skinId}
               roundNumber={round}
+              streak={streak}
               soundTone={soundTone}
               onFinish={finishGame}
             />
@@ -817,6 +1283,7 @@
               rare={lastResult.rare}
               coinsEarned={lastResult.coinsEarned}
               streak={lastResult.streakAtTime}
+              prevStreak={lastResult.prevStreak}
               onAgain={playAgain}
               onHome={goHome}
               onShare={handleShare}
@@ -826,9 +1293,7 @@
           {shopOpen && (
             <ShopScreen
               coins={coins}
-              skinId={skinId}
-              bgId={bgId}
-              soundId={soundId}
+              skinId={skinId} bgId={bgId} soundId={soundId}
               owned={owned}
               onClose={() => setShopOpen(false)}
               onBuy={handleBuy}
